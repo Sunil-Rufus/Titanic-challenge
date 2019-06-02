@@ -1,2 +1,241 @@
-# Auto detect text files and perform LF normalization
-* text=auto
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[3]:
+
+
+import pandas as pd
+from pandas import Series,DataFrame
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+sns.set_style('whitegrid')
+get_ipython().run_line_magic('matplotlib', 'inline')
+import sklearn
+from sklearn.linear_model import LogisticRegression
+from sklearn.svm import SVC, LinearSVC
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.ensemble import ExtraTreesClassifier
+from sklearn.ensemble import AdaBoostClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.naive_bayes import GaussianNB
+
+
+# In[4]:
+
+
+titanic_df = pd.read_csv(r"C:\Users\SUNIL RUFUS\Desktop\intern\titanic\train.csv")
+test_df    = pd.read_csv(r"C:\Users\SUNIL RUFUS\Desktop\intern\titanic\test.csv")
+
+
+# In[5]:
+
+
+print('\n  \n')
+titanic_df.head()
+
+
+# In[6]:
+
+
+print('\n \n')
+test_df.head() 
+
+
+# In[7]:
+
+
+def get_position(name):
+    if '.' in name:
+        return name.split(',')[1].split('.')[0].strip()
+    else:
+        return 'Unknown'
+
+def position_map(position):
+    if position in ['Mr']:
+        return 1
+    elif position in ['Master']:
+        return 3
+    elif position in ['Ms','Mlle','Miss']:
+        return 4
+    elif position in ['Mme','Mrs']:
+        return 5
+    else:
+        return 2
+    
+titanic_df['position'] = titanic_df['Name'].apply(get_position).apply(position_map)   
+test_df['position'] = test_df['Name'].apply(get_position).apply(position_map)
+possur1 = pd.crosstab(titanic_df['position'], titanic_df['Survived'])
+possur2 = possur1.div(possur1.sum(1).astype(float), axis=0)
+
+print(possur2)
+
+
+# In[8]:
+
+
+possur2.plot(kind='hist', 
+                  stacked=True, 
+                  title=' ')
+plt.xlabel('Position')
+plt.ylabel('Survival Rate')
+
+
+# In[9]:
+
+
+titanic_df.drop(['PassengerId','Name','Ticket','Cabin','Embarked'], axis=1, inplace = True)
+test_df.drop(['Name','Ticket','Embarked', 'Cabin'], axis=1, inplace = True)
+
+
+# In[10]:
+
+
+titanic_df.count()
+
+
+# In[11]:
+
+
+print(titanic_df["Age"].mean())
+
+
+# In[12]:
+
+
+titanic_df["Age"].fillna(titanic_df["Age"].mean(), inplace=True)
+
+
+# In[13]:
+
+
+titanic_df.count()
+
+
+# In[14]:
+
+
+test_df.count()
+
+
+# In[15]:
+
+
+print(test_df["Fare"].median())
+
+
+# In[16]:
+
+
+test_df["Fare"].fillna(test_df["Fare"].median(), inplace=True)
+test_df["Age"].fillna(test_df["Age"].mean(), inplace=True)
+
+
+# In[17]:
+
+
+test_df.count()
+
+
+# In[18]:
+
+
+titanic_df['Age'] = titanic_df['Age'].astype(int)
+test_df['Age'] = test_df['Age'].astype(int)
+
+
+# In[19]:
+
+
+sexes = sorted(titanic_df['Sex'].unique())
+genders_mapping = dict(zip(sexes, range(0, len(sexes) + 1)))
+titanic_df['Sex'] = titanic_df['Sex'].map(genders_mapping)
+test_df['Sex'] = test_df['Sex'].map(genders_mapping)
+
+
+# In[20]:
+
+
+print("\n 1 denotes male and 0 denotes female")
+print(titanic_df['Sex'])
+
+
+# In[21]:
+
+
+titanic_df.head()
+
+
+# In[22]:
+
+
+test_df.head()
+
+
+# In[31]:
+
+
+X_train = titanic_df.drop("Survived",axis=1)
+Y_train = titanic_df["Survived"]
+X_test  = test_df.drop("PassengerId",axis=1).copy()
+
+
+# In[32]:
+
+
+random_forest = RandomForestClassifier(n_estimators=100)
+
+
+# In[33]:
+
+
+random_forest.fit(X_train, Y_train)
+val1  = random_forest.predict(X_test)
+
+random_forest.score(X_train, Y_train)
+
+
+# In[34]:
+
+
+gradient_boost = GradientBoostingClassifier(n_estimators=100)
+gradient_boost.fit(X_train, Y_train)
+
+val2 = gradient_boost.predict(X_test)
+
+gradient_boost.score(X_train, Y_train)
+
+
+# In[35]:
+
+
+extra_tree = ExtraTreesClassifier(n_estimators=100)
+extra_tree.fit(X_train, Y_train)
+
+val3 = extra_tree.predict(X_test)
+
+extra_tree.score(X_train, Y_train)
+
+
+# In[36]:
+
+
+val3
+
+
+# In[29]:
+
+
+submission = pd.DataFrame({
+        "PassengerId": test_df["PassengerId"],
+        "Survived": val3
+    })
+submission.to_csv('result.csv', index=False)
+
+
+# In[ ]:
+
+
+
+
